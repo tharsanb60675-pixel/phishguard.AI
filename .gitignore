@@ -7,7 +7,7 @@ venv/
 ENV/
 env/
 
-# Python
+# Python (Backend)
 __pycache__/
 *.py[cod]
 *$py.class
@@ -17,12 +17,22 @@ htmlcov/
 .coverage
 .tox/
 
-# Node
+# Node (Frontend / Extension)
 node_modules/
 dist/
 dist-electron/
 build/
 .npm/
+
+# Android
+backend/android/.gradle/
+backend/android/.idea/
+backend/android/build/
+backend/android/app/build/
+backend/android/local.properties
+backend/android/**/*.apk
+backend/android/**/*.aab
+backend/android/**/*.keystore
 
 # IDEs
 .idea/
@@ -37,6 +47,7 @@ Thumbs.db
 # Databases
 *.db
 *.sqlite3
+*.db.backup
 
 # Logs
 npm-debug.log*
