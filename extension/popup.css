@@ -1,0 +1,331 @@
+/* ─── PhishGuard AI Popup Styles ─── */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  width: 360px;
+  background: #090d16;
+  color: #f1f5f9;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 12px;
+  overflow-x: hidden;
+}
+
+.popup-container {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #1e293b;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-icon {
+  font-size: 20px;
+}
+
+.brand-name {
+  font-size: 14px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.brand-sub {
+  display: block;
+  font-size: 10px;
+  color: #64748b;
+}
+
+.cyan {
+  color: #06b6d4;
+}
+
+.shield-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: rgba(6, 182, 212, 0.15);
+  border: 1px solid rgba(6, 182, 212, 0.4);
+  font-size: 10px;
+  font-weight: 800;
+  color: #38bdf8;
+}
+
+.pulse-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 8px #10b981;
+}
+
+/* Scan Action Button */
+.btn-primary-scan {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 14px;
+  background: linear-gradient(135deg, #06b6d4 0%, #2563eb 100%);
+  border: none;
+  border-radius: 14px;
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(6, 182, 212, 0.3);
+  transition: all 0.2s ease;
+}
+
+.btn-primary-scan:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(6, 182, 212, 0.45);
+}
+
+.scan-icon {
+  font-size: 18px;
+}
+
+.btn-text-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.btn-title {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+}
+
+.btn-sub {
+  font-size: 10px;
+  opacity: 0.9;
+}
+
+/* Stats Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.stat-card {
+  background: #0f172a;
+  border: 1px solid #1e293b;
+  border-radius: 10px;
+  padding: 10px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.stat-value {
+  font-size: 16px;
+  font-weight: 800;
+  color: #38bdf8;
+}
+
+.stat-label {
+  font-size: 9px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.text-rose { color: #f43f5e; }
+.text-amber { color: #f59e0b; }
+
+/* Pairing Banner */
+.pairing-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: rgba(30, 41, 59, 0.5);
+  border: 1px solid #334155;
+  border-radius: 12px;
+}
+
+.pairing-icon { font-size: 18px; }
+.pairing-info { flex: 1; display: flex; flex-direction: column; }
+.pairing-title { font-size: 11px; font-weight: 700; color: #e2e8f0; }
+.pairing-sub { font-size: 9px; color: #10b981; }
+.pairing-link {
+  font-size: 10px;
+  color: #38bdf8;
+  text-decoration: none;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: rgba(6, 182, 212, 0.15);
+}
+
+/* Latest Detection */
+.section-title {
+  font-size: 10px;
+  font-weight: 800;
+  color: #64748b;
+  letter-spacing: 0.5px;
+}
+
+.latest-card {
+  background: #0f172a;
+  border: 1px solid #1e293b;
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.empty-state {
+  color: #64748b;
+  font-size: 11px;
+  line-height: 1.4;
+  text-align: center;
+  padding: 8px 4px;
+}
+
+.detection-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.detection-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sev-pill {
+  font-size: 9px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #e11d48;
+  color: #fff;
+}
+
+.sev-pill.SAFE { background: #059669; }
+.sev-pill.SUSPICIOUS { background: #ca8a04; }
+
+.detection-score {
+  font-size: 11px;
+  font-weight: 800;
+  color: #f1f5f9;
+}
+
+.detection-url {
+  font-size: 11px;
+  font-family: monospace;
+  color: #38bdf8;
+  word-break: break-all;
+}
+
+.detection-reasons {
+  font-size: 10px;
+  color: #94a3b8;
+}
+
+.hidden { display: none; }
+
+/* Toggles */
+.toggle-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: #0f172a;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid #1e293b;
+}
+
+.toggle-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: #cbd5e1;
+}
+
+/* Switch styling */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 32px;
+  height: 18px;
+}
+
+.switch input { opacity: 0; width: 0; height: 0; }
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #334155;
+  transition: .2s;
+  border-radius: 18px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 12px;
+  width: 12px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .2s;
+  border-radius: 50%;
+}
+
+input:checked + .slider { background-color: #06b6d4; }
+input:checked + .slider:before { transform: translateX(14px); }
+
+/* Footer */
+.footer {
+  display: flex;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+.btn-footer {
+  flex: 2;
+  padding: 8px;
+  text-align: center;
+  background: rgba(30, 41, 59, 0.8);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  color: #38bdf8;
+  border-radius: 8px;
+  text-decoration: none;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.btn-footer-secondary {
+  flex: 1;
+  padding: 8px;
+  text-align: center;
+  background: #0f172a;
+  border: 1px solid #1e293b;
+  color: #94a3b8;
+  border-radius: 8px;
+  text-decoration: none;
+  font-size: 11px;
+}

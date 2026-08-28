@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>PhishGuard AI — QR & Web Shield</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <!-- Header -->
+    <header class="header">
+      <div class="brand">
+        <div class="brand-icon">🛡️</div>
+        <div class="brand-info">
+          <span class="brand-name">PhishGuard<span class="cyan">.AI</span></span>
+          <span class="brand-sub">Real-Time QR & Threat Shield</span>
+        </div>
+      </div>
+      <div class="shield-badge" id="shield-status-badge">
+        <span class="pulse-dot"></span>
+        <span id="shield-status-text">ACTIVE</span>
+      </div>
+    </header>
+
+    <!-- Scan Trigger Action -->
+    <div class="scan-action-card">
+      <button class="btn-primary-scan" id="btn-trigger-scan">
+        <span class="scan-icon">⚡</span>
+        <div class="btn-text-wrap">
+          <span class="btn-title">Scan Current Tab</span>
+          <span class="btn-sub">Shortcut: <strong>Ctrl + Shift + Q</strong></span>
+        </div>
+      </button>
+    </div>
+
+    <!-- Telemetry Stats Grid -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <span class="stat-value" id="stat-qr-scanned">0</span>
+        <span class="stat-label">QR Detected</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value text-rose" id="stat-threats-blocked">0</span>
+        <span class="stat-label">Threats Blocked</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value text-amber" id="stat-suspicious">0</span>
+        <span class="stat-label">Suspicious</span>
+      </div>
+    </div>
+
+    <!-- Android Companion Pairing Status -->
+    <div class="pairing-banner" id="pairing-banner">
+      <div class="pairing-icon">📱</div>
+      <div class="pairing-info">
+        <span class="pairing-title">Android Companion</span>
+        <span class="pairing-sub" id="pairing-sub-status">Live Real-Time Sync Ready</span>
+      </div>
+      <a href="http://localhost:5173/background-protection" target="_blank" class="pairing-link">Pair ↗</a>
+    </div>
+
+    <!-- Latest Scan Preview -->
+    <div class="section-title">LATEST QR DETECTION</div>
+    <div class="latest-card" id="latest-scan-container">
+      <div class="empty-state" id="empty-state">
+        Press <strong>Ctrl + Shift + Q</strong> on any webpage to detect & analyze visible QR codes.
+      </div>
+      <div class="detection-item hidden" id="detection-item">
+        <div class="detection-header">
+          <span class="sev-pill" id="latest-sev-pill">CRITICAL</span>
+          <span class="detection-score" id="latest-score-text">87/100</span>
+        </div>
+        <div class="detection-url" id="latest-url-text">https://example-phish.xyz/login</div>
+        <div class="detection-reasons" id="latest-reasons-text">Lookalike banking login page</div>
+      </div>
+    </div>
+
+    <!-- Quick Settings Toggles -->
+    <div class="toggle-group">
+      <div class="toggle-row">
+        <span>Automatic High-Risk Blocking</span>
+        <label class="switch">
+          <input type="checkbox" id="toggle-autoblock" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="toggle-row">
+        <span>OS Desktop Notifications</span>
+        <label class="switch">
+          <input type="checkbox" id="toggle-notifications" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <a href="http://localhost:5173/background-protection" target="_blank" class="btn-footer">
+        Open SOC Dashboard ↗
+      </a>
+      <a href="options.html" target="_blank" class="btn-footer-secondary">
+        Settings ⚙
+      </a>
+    </footer>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
