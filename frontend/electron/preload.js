@@ -4,6 +4,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   startRegionSelection: () => ipcRenderer.send('start-region-selection'),
   cancelRegionSelection: () => ipcRenderer.send('cancel-region-selection'),
   captureRegion: (bounds) => ipcRenderer.invoke('capture-region', bounds),
+  captureFullScreen: () => ipcRenderer.invoke('capture-full-screen'),
+  closeSmartScanOverlay: () => ipcRenderer.send('close-smart-scan-overlay'),
   showNotification: (details) => ipcRenderer.send('show-notification', details),
   readClipboard: () => ipcRenderer.invoke('read-clipboard'),
   moveFloatingKey: (delta) => ipcRenderer.send('move-floating-key', delta),

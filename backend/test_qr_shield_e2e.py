@@ -1,17 +1,23 @@
-"""
-End-to-End Test Suite for Real-Time Background QR Threat Detection & Android Sync.
-Tests threat heuristics, multi-code analysis, SQLite persistence, pairing, and real-time SSE stream.
-"""
+import os
+import sys
+from pathlib import Path
+
+backend_dir = Path(__file__).resolve().parent
+venv_site_packages = backend_dir / ".venv" / "Lib" / "site-packages"
+if venv_site_packages.exists() and str(venv_site_packages) not in sys.path:
+    sys.path.insert(0, str(venv_site_packages))
+if str(backend_dir) not in sys.path:
+    sys.path.insert(0, str(backend_dir))
 
 import asyncio
 import sqlite3
 import httpx
 import pytest
-from pathlib import Path
 from app.services.qr_threat_service import qr_threat_engine
 
 BASE_URL = "http://127.0.0.1:8000/api/v1"
 DB_PATH = Path(r"c:\Users\VICTUS\zero\backend\phishguard.db")
+
 
 
 def test_threat_scoring_engine():

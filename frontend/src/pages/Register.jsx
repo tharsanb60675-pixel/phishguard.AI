@@ -49,7 +49,22 @@ const Register = () => {
       addToast('Account created successfully!', 'success');
       navigate('/');
     } catch (err) {
-      setError(err.response?.data?.message || err.response?.data?.detail || 'Registration failed.');
+      let errorMsg = 'Registration failed.';
+      if (err.response?.data?.detail) {
+        if (Array.isArray(err.response.data.detail)) {
+          errorMsg = err.response.data.detail[0].msg;
+        } else {
+          errorMsg = err.response.data.detail;
+        }
+      } else if (err.response?.data?.message) {
+        errorMsg = err.response.data.message;
+      }
+      
+      // Clean up Pydantic value_error prefix
+      if (typeof errorMsg === 'string' && errorMsg.startsWith('Value error, ')) {
+        errorMsg = errorMsg.replace('Value error, ', '');
+      }
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }

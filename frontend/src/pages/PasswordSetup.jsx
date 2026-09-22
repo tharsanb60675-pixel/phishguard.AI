@@ -46,7 +46,7 @@ const PasswordSetup = () => {
       return;
     }
     if (!validatePassword(password)) {
-      addToast('Password does not meet the security requirements.', 'warning');
+      addToast('Password must be at least 8 characters and contain at least one uppercase letter, one lowercase letter, one number, and one special character.', 'warning');
       return;
     }
 
@@ -61,7 +61,19 @@ const PasswordSetup = () => {
         navigate('/');
       }
     } catch (err) {
-      addToast(err.response?.data?.detail || 'Failed to setup password. Please try again.', 'error');
+      let errorMsg = 'Failed to setup password. Please try again.';
+      if (err.response?.data?.detail) {
+        if (Array.isArray(err.response.data.detail)) {
+          errorMsg = err.response.data.detail[0].msg;
+        } else {
+          errorMsg = err.response.data.detail;
+        }
+      }
+      
+      if (typeof errorMsg === 'string' && errorMsg.startsWith('Value error, ')) {
+        errorMsg = errorMsg.replace('Value error, ', '');
+      }
+      addToast(errorMsg, 'error');
     } finally {
       setLoading(false);
     }

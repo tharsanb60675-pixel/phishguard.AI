@@ -38,7 +38,9 @@ import {
   Ban,
   Settings,
   AlertCircle,
-  X
+  X,
+  Monitor,
+  Maximize
 } from 'lucide-react';
 
 const BackgroundProtection = () => {
@@ -97,6 +99,35 @@ const BackgroundProtection = () => {
   const [selectionRect, setSelectionRect] = useState({ x: 0, y: 0, width: 320, height: 180, label: 'SMART REGION' });
   const [isDraggingRegion, setIsDraggingRegion] = useState(false);
   const [regionStartPos, setRegionStartPos] = useState({ x: 0, y: 0 });
+
+  // Smart Shield New Interactive States
+  const [contextMenu, setContextMenu] = useState({ show: false, x: 0, y: 0 });
+  const [showShieldPanel, setShowShieldPanel] = useState(false);
+  const [extensionStatus, setExtensionStatus] = useState(null); // 'connected', 'missing', 'denied'
+  const [scanProgressStage, setScanProgressStage] = useState(null); // 'INITIALIZING', 'CAPTURING TAB', etc
+  const [showExtErrorModal, setShowExtErrorModal] = useState(false);
+
+  const EXTENSION_ID = import.meta.env.VITE_EXTENSION_ID || 'dummy_extension_id_replace_me';
+
+  // Close context menu on outside click or Escape
+  useEffect(() => {
+    const handleOutsideClick = () => {
+      if (contextMenu.show) setContextMenu({ show: false, x: 0, y: 0 });
+      if (showShieldPanel) setShowShieldPanel(false);
+    };
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') {
+        setContextMenu({ show: false, x: 0, y: 0 });
+        setShowShieldPanel(false);
+      }
+    };
+    window.addEventListener('click', handleOutsideClick);
+    window.addEventListener('keydown', handleEscape);
+    return () => {
+      window.removeEventListener('click', handleOutsideClick);
+      window.removeEventListener('keydown', handleEscape);
+    };
+  }, [contextMenu.show, showShieldPanel]);
 
   const handleRegionMouseDown = (e) => {
     if (e.target.closest('.phishguard-banner-panel')) return;
@@ -616,6 +647,75 @@ const BackgroundProtection = () => {
     }
   };
 
+  // --- NEW: Browser Extension Integration ---
+  const handleScanCurrentTab = async () => {
+    // 1. Permission Check
+    const isAuthorized = localStorage.getItem('phishguard_extension_authorized') === 'true';
+    if (!isAuthorized) {
+      setPermissionTarget({ setter: () => {}, label: 'Tab Access' });
+      setShowPermissionModal(true);
+      return;
+    }
+
+    // 2. Scan Lifecycle Updates
+    setScanProgressStage('SCAN INITIALIZING');
+    
+    // Simulate progression for visual feedback if it's too fast
+    setTimeout(() => {
+      if (scanProgressStage) setScanProgressStage('CAPTURING TAB');
+    }, 500);
+
+    // 3. Request extension via chrome.runtime
+    if (!window.chrome || !window.chrome.runtime) {
+      setScanProgressStage(null);
+      setExtensionStatus('missing');
+      setShowExtErrorModal(true);
+      return;
+    }
+
+    try {
+      window.chrome.runtime.sendMessage(EXTENSION_ID, { action: 'SCAN_CURRENT_TAB' }, async (response) => {
+        if (window.chrome.runtime.lastError) {
+          console.warn("Extension error:", window.chrome.runtime.lastError);
+          setScanProgressStage(null);
+          setExtensionStatus('missing');
+          setShowExtErrorModal(true);
+          return;
+        }
+
+        if (!response || !response.success) {
+          setScanProgressStage(null);
+          addToast(response?.error || 'Unable to capture this tab. Please check browser permissions.', 'error');
+          return;
+        }
+
+        setScanProgressStage('ANALYZING URLS');
+        setTimeout(() => setScanProgressStage('CHECKING TEXT'), 800);
+        setTimeout(() => setScanProgressStage('THREAT ANALYSIS'), 1600);
+
+        // 4. Use extracted data for real combined analysis
+        const extractedData = response.data;
+        const pageTitle = response.tabTitle || 'Active Tab';
+        const pageUrl = response.tabUrl || '';
+        
+        let combinedText = extractedData.text || '';
+        if (extractedData.hasPasswordForms) {
+           combinedText += ' [WARNING: UNPROTECTED PASSWORD FIELD DETECTED IN DOM]';
+        }
+
+        setTimeout(async () => {
+           await runCombinedAnalysis(pageTitle, combinedText, pageUrl);
+           setScanProgressStage('SCAN COMPLETE');
+           setTimeout(() => setScanProgressStage(null), 1000);
+        }, 2500);
+      });
+    } catch (err) {
+      setScanProgressStage(null);
+      setExtensionStatus('missing');
+      setShowExtErrorModal(true);
+    }
+  };
+
   // Analyze the QR detected by Smart Shield
   const handleAnalyzeQr = async (payload) => {
     setDetectedQrPayload(null);
@@ -774,12 +874,32 @@ const BackgroundProtection = () => {
 
   // Movable Smart Shield Drag events
   const handleMouseDown = (e) => {
-    e.preventDefault();
+    // Only drag on middle mouse or if specifically dragging (prevent conflict with left/right click)
+    if (e.button === 2) return; // Right click
     setIsDragging(true);
     setDragOffset({
       x: e.clientX - floatingPosition.x,
       y: e.clientY - floatingPosition.y
     });
+  };
+
+  const handleShieldContextMenu = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setContextMenu({
+      show: true,
+      x: e.clientX,
+      y: e.clientY
+    });
+    setShowShieldPanel(false);
+  };
+
+  const handleShieldClick = (e) => {
+    e.stopPropagation();
+    if (!isDragging) {
+      setShowShieldPanel(!showShieldPanel);
+      setContextMenu({ show: false, x: 0, y: 0 });
+    }
   };
 
   return (
@@ -794,36 +914,110 @@ const BackgroundProtection = () => {
             top: `${floatingPosition.y}px`,
             zIndex: 9999,
           }}
-          className={`w-16 h-16 bg-slate-900 border-2 rounded-2xl flex flex-col items-center justify-center shadow-2xl hover:scale-105 active:scale-95 transition-transform duration-200 select-none group ${
-            isDragging ? 'border-cyan-400 cursor-grabbing bg-slate-800' : 'border-cyan-500/80 cursor-grab'
+          className={`w-16 h-16 bg-slate-900 border-2 rounded-2xl flex flex-col items-center justify-center shadow-2xl transition-transform duration-200 select-none group ${
+            isDragging ? 'border-cyan-400 cursor-grabbing bg-slate-800 scale-105' : 'border-cyan-500/80 cursor-pointer hover:scale-105'
           }`}
           onPointerDown={handleMouseDown}
+          onClick={handleShieldClick}
+          onContextMenu={handleShieldContextMenu}
         >
-          <div className="text-xl">🛡️</div>
-          <span className="text-[9px] font-mono font-black text-cyan-400 tracking-wider">SHIELD</span>
+          {scanProgressStage ? (
+             <div className="flex flex-col items-center">
+                <div className="w-5 h-5 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
+                <span className="text-[7px] font-mono font-black text-cyan-400 tracking-wider mt-1.5 uppercase text-center">{scanProgressStage.split(' ')[0]}</span>
+             </div>
+          ) : (
+            <>
+              <div className="text-xl">🛡️</div>
+              <span className="text-[9px] font-mono font-black text-cyan-400 tracking-wider">SHIELD</span>
+            </>
+          )}
 
-          {/* Smart Shield Hover menu */}
-          <div className="absolute right-0 top-full mt-2 bg-slate-950/95 border border-slate-800 rounded-xl p-2 hidden group-hover:block hover:block space-y-1.5 shadow-2xl min-w-[150px] pointer-events-auto">
-            <div className="text-[9px] font-bold text-slate-500 px-2 py-0.5 border-b border-slate-900 mb-1">SMART ACTIONS</div>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleScanScreenClick();
+          {/* New Left-Click Status Panel */}
+          {showShieldPanel && !scanProgressStage && (
+            <div className="absolute right-0 bottom-full mb-3 bg-slate-950/95 border border-slate-700 rounded-2xl p-4 shadow-2xl min-w-[220px] pointer-events-auto" onClick={e => e.stopPropagation()}>
+              <div className="flex items-center justify-between mb-3">
+                <div className="text-[10px] font-bold text-cyan-400 flex items-center gap-1.5">
+                  <ShieldCheck className="w-4 h-4" />
+                  SMART SHIELD
+                </div>
+                <div className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                  ACTIVE
+                </div>
+              </div>
+              <div className="space-y-2 mb-3">
+                 <div className="flex justify-between items-center text-[10px] font-mono border-b border-slate-800 pb-1">
+                    <span className="text-slate-500">Last Scan</span>
+                    <span className="text-slate-300">{lastScanTime}</span>
+                 </div>
+                 <div className="flex justify-between items-center text-[10px] font-mono border-b border-slate-800 pb-1">
+                    <span className="text-slate-500">Threat Level</span>
+                    <span className="text-emerald-400">SAFE</span>
+                 </div>
+              </div>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowShieldPanel(false);
+                  handleScanCurrentTab();
+                }}
+                className="w-full py-2 rounded bg-cyan-500 text-black font-extrabold text-[10px] hover:bg-cyan-400 transition-colors shadow-md shadow-cyan-500/10"
+              >
+                SCAN CURRENT TAB
+              </button>
+            </div>
+          )}
+
+          {/* New Right-Click Context Menu */}
+          {contextMenu.show && (
+            <div 
+              style={{
+                 position: 'fixed',
+                 left: `${Math.min(contextMenu.x, window.innerWidth - 180)}px`,
+                 top: `${Math.min(contextMenu.y, window.innerHeight - 150)}px`,
               }}
-              className="w-full text-left text-[10px] font-mono hover:bg-cyan-500/10 hover:text-cyan-400 px-2.5 py-1.5 rounded text-slate-300 transition-colors flex items-center gap-1.5"
+              className="bg-slate-950/95 border border-slate-800 rounded-xl p-2 space-y-1.5 shadow-2xl min-w-[160px] pointer-events-auto z-[10000]"
+              onClick={e => e.stopPropagation()}
             >
-              <span>📸</span> Scan Screen
-            </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowMockScanModal(true);
-              }}
-              className="w-full text-left text-[10px] font-mono hover:bg-cyan-500/10 hover:text-cyan-400 px-2.5 py-1.5 rounded text-slate-300 transition-colors flex items-center gap-1.5"
-            >
-              <span>🧪</span> Mock Screens
-            </button>
-          </div>
+              <div className="text-[9px] font-bold text-slate-500 px-2 py-0.5 border-b border-slate-900 mb-1">SMART ACTIONS</div>
+              <button
+                onClick={() => {
+                  setContextMenu({ show: false });
+                  handleScanCurrentTab();
+                }}
+                className="w-full text-left text-[11px] font-mono hover:bg-cyan-500/10 hover:text-cyan-400 px-2.5 py-2 rounded text-slate-300 transition-colors flex items-center gap-2"
+              >
+                <Globe className="w-3.5 h-3.5" /> Scan Current Tab
+              </button>
+              <button
+                onClick={() => {
+                  setContextMenu({ show: false });
+                  handleScanScreenClick();
+                }}
+                className="w-full text-left text-[11px] font-mono hover:bg-cyan-500/10 hover:text-cyan-400 px-2.5 py-2 rounded text-slate-300 transition-colors flex items-center gap-2"
+              >
+                <Monitor className="w-3.5 h-3.5" /> Scan Screen
+              </button>
+              <button
+                onClick={() => {
+                  setContextMenu({ show: false });
+                  setShowRegionOverlay(true);
+                }}
+                className="w-full text-left text-[11px] font-mono hover:bg-cyan-500/10 hover:text-cyan-400 px-2.5 py-2 rounded text-slate-300 transition-colors flex items-center gap-2"
+              >
+                <Maximize className="w-3.5 h-3.5" /> Scan Region
+              </button>
+              <button
+                onClick={() => {
+                  setContextMenu({ show: false });
+                  setShowMockScanModal(true);
+                }}
+                className="w-full text-left text-[11px] font-mono hover:bg-cyan-500/10 hover:text-cyan-400 px-2.5 py-2 rounded text-slate-300 transition-colors flex items-center gap-2 border-t border-slate-800 mt-1 pt-2"
+              >
+                <Layers className="w-3.5 h-3.5" /> Mock Screens
+              </button>
+            </div>
+          )}
 
           {/* Temporary visual overlay action popover */}
           {detectedQrPayload && (
@@ -1355,21 +1549,21 @@ const BackgroundProtection = () => {
               </div>
 
               <div className="flex gap-3 p-3.5 rounded-2xl bg-slate-900 border border-slate-800/80">
-                <QrCode className="w-5 h-5 text-cyan-400 shrink-0 mt-0.5" />
+                <Globe className="w-5 h-5 text-cyan-400 shrink-0 mt-0.5" />
                 <div>
-                  <h4 className="text-xs font-bold text-slate-200">Screen Capture (MediaProjection / getDisplayMedia)</h4>
+                  <h4 className="text-xs font-bold text-slate-200">Browser Extension Tab Access</h4>
                   <p className="text-[10px] text-slate-400 mt-0.5 leading-relaxed">
-                    Used only when you trigger a scan to inspect visible visual elements (QR codes, barcodes, scam links).
+                    PhishGuard.AI needs access to the current tab to analyze suspicious links, QR codes, messages, and page indicators.
                   </p>
                 </div>
               </div>
 
               <div className="flex gap-3 p-3.5 rounded-2xl bg-slate-900 border border-slate-800/80">
-                <Layers className="w-5 h-5 text-cyan-400 shrink-0 mt-0.5" />
+                <QrCode className="w-5 h-5 text-cyan-400 shrink-0 mt-0.5" />
                 <div>
-                  <h4 className="text-xs font-bold text-slate-200">Display Over Other Apps (Overlays)</h4>
+                  <h4 className="text-xs font-bold text-slate-200">Screen Capture (MediaProjection / getDisplayMedia)</h4>
                   <p className="text-[10px] text-slate-400 mt-0.5 leading-relaxed">
-                    Required to render the Smart Shield floating control over active applications.
+                    Used only when you trigger a scan to inspect visible visual elements (QR codes, barcodes, scam links).
                   </p>
                 </div>
               </div>
@@ -1550,7 +1744,46 @@ const BackgroundProtection = () => {
         </div>
       )}
 
-      {/* MODAL 4: Detailed Scan Inspection Modal */}
+      {/* ─── MODAL 4: EXTENSION ERROR MODAL ─── */}
+      {showExtErrorModal && (
+        <div className="fixed inset-0 z-[10050] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-fadeIn">
+          <div className="max-w-md w-full glass-panel rounded-3xl border border-slate-800 p-6 space-y-5 text-center shadow-2xl relative">
+            <div className="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center mx-auto text-rose-400">
+              <AlertCircle className="w-6 h-6" />
+            </div>
+
+            <div>
+              <h3 className="text-base font-extrabold text-white">Extension Disconnected</h3>
+              <p className="text-xs text-slate-400 mt-2 leading-relaxed">
+                PhishGuard.AI browser protection extension is not connected or permission was denied.
+              </p>
+              <p className="text-[11px] text-slate-500 mt-2 font-mono leading-relaxed">
+                Tab access requires the PhishGuard extension to properly and securely inspect active tabs.
+              </p>
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  setShowExtErrorModal(false);
+                  addToast("Please install the extension and refresh.", "info");
+                }}
+                className="flex-1 py-2.5 rounded-xl bg-cyan-500 text-black font-extrabold text-xs hover:bg-cyan-400 transition-colors"
+              >
+                Connect Extension
+              </button>
+              <button
+                onClick={() => setShowExtErrorModal(false)}
+                className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 5: Detailed Scan Inspection Modal */}
       {selectedScan && (
         <div className="fixed inset-0 z-[10050] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
           <div className="max-w-lg w-full glass-panel rounded-2xl border border-slate-700 p-6 space-y-5 shadow-2xl relative">

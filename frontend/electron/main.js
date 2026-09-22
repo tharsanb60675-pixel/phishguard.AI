@@ -8,6 +8,7 @@ const __dirname = path.dirname(__filename);
 let mainWindow;
 let floatingKeyWindow;
 let regionSelectorWindow;
+let smartScanOverlayWindow;
 
 function createMainWindow() {
   mainWindow = new BrowserWindow({
@@ -92,18 +93,55 @@ function createRegionSelectorWindow() {
   });
 }
 
+function createSmartScanOverlayWindow() {
+  const primaryDisplay = screen.getPrimaryDisplay();
+  const { width, height } = primaryDisplay.workAreaSize;
+
+  smartScanOverlayWindow = new BrowserWindow({
+    width,
+    height,
+    x: 0,
+    y: 0,
+    transparent: true,
+    frame: false,
+    alwaysOnTop: true,
+    resizable: false,
+    skipTaskbar: true,
+    show: false, // Initially hidden
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      nodeIntegration: false,
+      contextIsolation: true
+    }
+  });
+
+  smartScanOverlayWindow.setAlwaysOnTop(true, 'screen-saver', 1);
+
+  const url = process.env.VITE_DEV_SERVER_URL 
+    ? `${process.env.VITE_DEV_SERVER_URL}smart-scan-overlay` 
+    : `file://${path.join(__dirname, '../dist/index.html')}#/smart-scan-overlay`;
+  
+  smartScanOverlayWindow.loadURL(url);
+
+  smartScanOverlayWindow.on('close', (e) => {
+    e.preventDefault();
+    smartScanOverlayWindow.hide();
+  });
+}
+
 app.whenReady().then(() => {
   createMainWindow();
   createFloatingKeyWindow();
   
   // Need to wait for app ready to get screen size
   createRegionSelectorWindow();
+  createSmartScanOverlayWindow();
 
   // Register Global Hotkey
   globalShortcut.register('CommandOrControl+Shift+Q', () => {
-    if (regionSelectorWindow) {
-      regionSelectorWindow.show();
-      regionSelectorWindow.focus();
+    if (smartScanOverlayWindow) {
+      smartScanOverlayWindow.show();
+      smartScanOverlayWindow.focus();
     }
   });
 
@@ -163,6 +201,42 @@ ipcMain.handle('capture-region', async (event, bounds) => {
   } catch (error) {
     console.error('Failed to capture region:', error);
     return null;
+  }
+});
+
+// IPC: Capture Full Screen
+ipcMain.handle('capture-full-screen', async (event) => {
+  try {
+    if (smartScanOverlayWindow) {
+      smartScanOverlayWindow.hide();
+    }
+    
+    // Wait for the overlay window to hide completely so it doesn't appear in screenshot
+    await new Promise(resolve => setTimeout(resolve, 200));
+
+    const sources = await desktopCapturer.getSources({ types: ['screen'], thumbnailSize: { width: 10000, height: 10000 } });
+    const primarySource = sources[0];
+
+    const image = primarySource.thumbnail;
+    const dataUrl = image.toDataURL();
+    
+    // Show overlay again
+    if (smartScanOverlayWindow) {
+      smartScanOverlayWindow.show();
+    }
+    
+    return dataUrl;
+  } catch (error) {
+    console.error('Failed to capture full screen:', error);
+    if (smartScanOverlayWindow) smartScanOverlayWindow.show();
+    return null;
+  }
+});
+
+// IPC: Close Smart Scan Overlay
+ipcMain.on('close-smart-scan-overlay', () => {
+  if (smartScanOverlayWindow) {
+    smartScanOverlayWindow.hide();
   }
 });
 

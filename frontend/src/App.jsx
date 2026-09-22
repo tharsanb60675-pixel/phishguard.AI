@@ -28,6 +28,8 @@ import OTPVerification from './pages/OTPVerification';
 import PasswordSetup from './pages/PasswordSetup';
 import ProfileOnboarding from './pages/ProfileOnboarding';
 
+import SmartScanOverlay from './pages/SmartScanOverlay';
+
 // Protected Route Guard
 const ProtectedRoute = ({ children, requireProfile = true }) => {
   const { isAuthenticated, loading, user } = useAuth();
@@ -59,8 +61,10 @@ const ProtectedRoute = ({ children, requireProfile = true }) => {
 };
 
 function AppContent() {
-  const location = import.meta.env.VITE_DEV_SERVER_URL ? window.location.pathname : window.location.hash;
-  const isOverlay = location.includes('/floating-key') || location.includes('/region-selector');
+  const path = typeof window !== 'undefined' ? window.location.pathname || '' : '';
+  const hash = typeof window !== 'undefined' ? window.location.hash || '' : '';
+  const isOverlay = path.includes('/floating-key') || path.includes('/region-selector') || path.includes('/smart-scan-overlay') ||
+                    hash.includes('/floating-key') || hash.includes('/region-selector') || hash.includes('/smart-scan-overlay');
   const navigate = useNavigate();
 
   React.useEffect(() => {
@@ -77,6 +81,7 @@ function AppContent() {
       <Routes>
         <Route path="/floating-key" element={<FloatingKeyOverlay />} />
         <Route path="/region-selector" element={<RegionSelectorOverlay />} />
+        <Route path="/smart-scan-overlay" element={<SmartScanOverlay />} />
       </Routes>
     );
   }
@@ -110,6 +115,7 @@ function AppContent() {
                     </ProtectedRoute>
                   }
                 />
+                <Route path="/dashboard" element={<Navigate to="/" replace />} />
                 <Route
                   path="/scanner"
                   element={
@@ -118,6 +124,8 @@ function AppContent() {
                     </ProtectedRoute>
                   }
                 />
+                <Route path="/scan" element={<Navigate to="/scanner" replace />} />
+                <Route path="/url-check" element={<Navigate to="/scanner" replace />} />
                 <Route
                   path="/qr-scanner"
                   element={
@@ -126,6 +134,7 @@ function AppContent() {
                     </ProtectedRoute>
                   }
                 />
+                <Route path="/qr-scan" element={<Navigate to="/qr-scanner" replace />} />
                 <Route
                   path="/helpline"
                   element={
