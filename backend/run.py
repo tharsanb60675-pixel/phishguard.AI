@@ -13,11 +13,12 @@ if str(backend_dir) not in sys.path:
 import uvicorn
 
 if __name__ == "__main__":
-    print("[PHISHGUARD] Starting FastAPI Backend on http://0.0.0.0:8000 ...", flush=True)
+    port = int(os.getenv("PORT", 8000))
+    print(f"[PHISHGUARD] Starting FastAPI Backend on http://0.0.0.0:{port} ...", flush=True)
     uvicorn.run(
         "app.main:app",
         host="0.0.0.0",
-        port=8000,
+        port=port,
         reload=False
     )
 
