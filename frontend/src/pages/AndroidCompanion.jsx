@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useThreat } from '../context/ThreatContext';
-import api from '../services/api';
+import api, { API_BASE_URL } from '../services/api';
 import {
   Smartphone,
   ShieldCheck,
@@ -91,7 +91,7 @@ const AndroidCompanion = () => {
   useEffect(() => {
     fetchLatestScan();
     const token = localStorage.getItem('phishguard_access_token');
-    const sseUrl = `http://localhost:8000/api/v1/devices/events${token ? `?token=${token}` : ''}`;
+    const sseUrl = `${API_BASE_URL}/devices/events${token ? `?token=${token}` : ''}`;
     
     let eventSource = null;
     try {

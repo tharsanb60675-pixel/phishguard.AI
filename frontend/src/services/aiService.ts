@@ -7,9 +7,10 @@
 
 import axios from 'axios';
 import { ChatMessage, APIRequest, APIResponse } from '../types/chat';
+import { API_BASE_URL } from './api';
 
 // ─── Environment & Configuration Defaults ─────────────────────────────────────
-const DEFAULT_API_URL = 'http://localhost:8000/api/v1/chat';
+const DEFAULT_API_URL = `${API_BASE_URL}/chat`;
 const API_URL = import.meta.env.VITE_AI_API_URL || DEFAULT_API_URL;
 const API_KEY = import.meta.env.VITE_AI_API_KEY || 'YOUR_API_KEY';
 

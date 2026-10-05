@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import jsQR from 'jsqr';
-import { useThreat } from '../context/ThreatContext';
-import api from '../services/api';
+import api, { API_BASE_URL } from '../services/api';
 import {
   ShieldCheck,
   ShieldAlert,
@@ -326,7 +325,7 @@ const BackgroundProtection = () => {
     fetchInitialTelemetry();
 
     const token = localStorage.getItem('phishguard_access_token');
-    const sseUrl = `http://localhost:8000/api/v1/devices/events${token ? `?token=${token}` : ''}`;
+    const sseUrl = `${API_BASE_URL}/devices/events${token ? `?token=${token}` : ''}`;
     let eventSource = null;
 
     try {
@@ -796,7 +795,7 @@ const BackgroundProtection = () => {
       setPairingData({
         pairing_code: '582914',
         expires_in_seconds: 600,
-        pairing_qr_payload: JSON.stringify({ code: '582914', server: 'http://localhost:8000/api/v1' }),
+        pairing_qr_payload: JSON.stringify({ code: '582914', server: API_BASE_URL }),
       });
     } finally {
       setPairingLoading(false);

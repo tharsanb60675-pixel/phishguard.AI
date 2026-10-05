@@ -38,7 +38,7 @@ async def send_otp(
     return await auth_service.send_otp(db, req.email)
 
 
-@router.post("/register", response_model=dict)
+@router.post("/register", response_model=dict, status_code=status.HTTP_201_CREATED)
 async def register(
     req: UserRegisterRequest,
     db: AsyncSession = Depends(get_db)

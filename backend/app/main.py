@@ -35,9 +35,17 @@ app = FastAPI(
 )
 
 # CORS Configuration
+allow_origins = settings.cors_origin_list
+allow_origin_regex = None
+
+if "*" in allow_origins:
+    allow_origins = []
+    allow_origin_regex = r".*"
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origin_list,  # Permits local dev frontends securely
+    allow_origins=allow_origins,
+    allow_origin_regex=allow_origin_regex,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
