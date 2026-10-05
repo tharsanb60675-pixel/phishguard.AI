@@ -58,6 +58,8 @@ const Register = () => {
         }
       } else if (err.response?.data?.message) {
         errorMsg = err.response.data.message;
+      } else if (err.message === 'Network Error' || !err.response) {
+        errorMsg = 'Cannot connect to backend server. Please ensure your backend is running and VITE_API_BASE_URL is configured on Vercel.';
       }
       
       // Clean up Pydantic value_error prefix

@@ -33,7 +33,11 @@ const Login = () => {
       addToast('Login successful', 'success');
       navigate('/');
     } catch (err) {
-      setError(err.response?.data?.message || err.response?.data?.detail || 'Invalid email or password.');
+      let msg = err.response?.data?.message || err.response?.data?.detail;
+      if (!msg && (err.message === 'Network Error' || !err.response)) {
+        msg = 'Cannot connect to backend server. Please check your backend URL configuration on Vercel.';
+      }
+      setError(msg || 'Invalid email or password.');
     } finally {
       setLoading(false);
     }
