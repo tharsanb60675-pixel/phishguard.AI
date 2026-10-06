@@ -1,9 +1,32 @@
-import axios from 'axios';
+/**
+ * Robust API Base URL Normalizer:
+ * Handles:
+ * - Trailing slashes (e.g. "https://phishguard-backend.onrender.com/" -> "https://phishguard-backend.onrender.com/api/v1")
+ * - Missing /api/v1 path (e.g. "https://phishguard-backend.onrender.com" -> "https://phishguard-backend.onrender.com/api/v1")
+ * - Existing /api or /api/v1 paths (e.g. "https://phishguard-backend.onrender.com/api/v1" -> preserved cleanly)
+ * - Vercel & Production environment variables (VITE_API_BASE_URL, VITE_API_URL)
+ * - Development fallback (http://localhost:8000/api/v1)
+ */
+export const normalizeApiBaseUrl = (rawUrl) => {
+  let url = (rawUrl || '').trim();
+  if (!url) {
+    return 'http://localhost:8000/api/v1';
+  }
+  // Strip trailing slashes
+  url = url.replace(/\/+$/, '');
+  
+  if (url.endsWith('/api/v1')) {
+    return url;
+  }
+  if (url.endsWith('/api')) {
+    return `${url}/v1`;
+  }
+  return `${url}/api/v1`;
+};
 
-const getApiBaseUrl = () => {
-  if (import.meta.env.VITE_API_BASE_URL) return import.meta.env.VITE_API_BASE_URL;
-  if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
-  return 'http://localhost:8000/api/v1';
+export const getApiBaseUrl = () => {
+  const envUrl = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL;
+  return normalizeApiBaseUrl(envUrl);
 };
 
 export const API_BASE_URL = getApiBaseUrl();

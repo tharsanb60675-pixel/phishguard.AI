@@ -24,6 +24,7 @@ router = APIRouter(prefix="/scan", tags=["Threat Scanning"])
 
 
 @router.post("/", response_model=ThreatScanResponse, status_code=status.HTTP_200_OK)
+@router.post("", response_model=ThreatScanResponse, status_code=status.HTTP_200_OK, include_in_schema=False)
 async def perform_threat_scan(
     req: ThreatScanRequest,
     current_user: User = Depends(get_optional_user),

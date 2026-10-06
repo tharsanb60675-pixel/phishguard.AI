@@ -14,6 +14,7 @@ router = APIRouter(prefix="/chat", tags=["Cyber-Safety Chatbot"])
 
 
 @router.post("/", response_model=ChatResponse)
+@router.post("", response_model=ChatResponse, include_in_schema=False)
 async def chat_with_cyber_assistant(
     req: ChatRequest,
     current_user: User = Depends(get_optional_user),

@@ -20,16 +20,22 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
-    # Relational Database (Supports MySQL & SQLite async)
+    # Relational Database (Supports MySQL & SQLite async & PostgreSQL)
     DATABASE_URL: str = ""
 
     def __init__(self, **values):
         super().__init__(**values)
-        if not self.DATABASE_URL or "phishguard.db" in self.DATABASE_URL:
+        if not self.DATABASE_URL or "phishguard.db" in self.DATABASE_URL or self.DATABASE_URL.startswith("sqlite"):
             # Resolve absolute path to backend/phishguard.db
             backend_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
             db_path = os.path.join(backend_dir, "phishguard.db").replace("\\", "/")
             self.DATABASE_URL = f"sqlite+aiosqlite:///{db_path}"
+        elif self.DATABASE_URL.startswith("postgres://"):
+            self.DATABASE_URL = self.DATABASE_URL.replace("postgres://", "postgresql+asyncpg://", 1)
+        elif self.DATABASE_URL.startswith("postgresql://") and not self.DATABASE_URL.startswith("postgresql+asyncpg://"):
+            self.DATABASE_URL = self.DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
+        elif self.DATABASE_URL.startswith("mysql://") and not self.DATABASE_URL.startswith("mysql+aiomysql://"):
+            self.DATABASE_URL = self.DATABASE_URL.replace("mysql://", "mysql+aiomysql://", 1)
 
     # Document Database (MongoDB)
     MONGODB_URL: str = "mongodb://localhost:27017"
@@ -47,12 +53,17 @@ class Settings(BaseSettings):
 
     # CORS
     CORS_ORIGINS: str = "*"
+    CORS_ORIGIN_REGEX: str = r"^https:\/\/.*\.vercel\.app$"
+    FRONTEND_URL: str = ""
 
     @property
     def cors_origin_list(self) -> List[str]:
-        if not self.CORS_ORIGINS or self.CORS_ORIGINS.strip() == "*":
-            return ["*"]
-        return [origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()]
+        origins = []
+        if self.CORS_ORIGINS and self.CORS_ORIGINS.strip() != "*":
+            origins.extend([o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()])
+        if self.FRONTEND_URL and self.FRONTEND_URL.strip():
+            origins.append(self.FRONTEND_URL.strip().rstrip("/"))
+        return origins
 
     @property
     def effective_openai_key(self) -> str:

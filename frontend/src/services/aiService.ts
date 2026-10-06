@@ -10,8 +10,15 @@ import { ChatMessage, APIRequest, APIResponse } from '../types/chat';
 import { API_BASE_URL } from './api';
 
 // ─── Environment & Configuration Defaults ─────────────────────────────────────
-const DEFAULT_API_URL = `${API_BASE_URL}/chat`;
-const API_URL = import.meta.env.VITE_AI_API_URL || DEFAULT_API_URL;
+const getAiApiUrl = () => {
+  const rawAiUrl = import.meta.env.VITE_AI_API_URL;
+  if (rawAiUrl && rawAiUrl.trim()) {
+    return rawAiUrl.trim().replace(/\/+$/, '');
+  }
+  return `${API_BASE_URL}/chat`;
+};
+
+const API_URL = getAiApiUrl();
 const API_KEY = import.meta.env.VITE_AI_API_KEY || 'YOUR_API_KEY';
 
 /**

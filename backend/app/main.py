@@ -34,21 +34,38 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
-# CORS Configuration
-allow_origins = settings.cors_origin_list
+# Production & Development CORS Configuration
+allow_origins = []
 allow_origin_regex = None
 
-if "*" in allow_origins:
+if settings.CORS_ORIGINS == "*" or "*" in settings.cors_origin_list:
     allow_origins = []
     allow_origin_regex = r".*"
+else:
+    # Always allow local dev environments plus any user configured domains
+    default_dev_origins = [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+        "http://localhost:5174",
+        "http://127.0.0.1:5174",
+    ]
+    allow_origins = list(set(settings.cors_origin_list + default_dev_origins))
+    # Regex to support all Vercel domains (e.g. *.vercel.app) as well as custom regex if provided
+    allow_origin_regex = settings.CORS_ORIGIN_REGEX or r"^https:\/\/.*\.vercel\.app$"
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allow_origins,
     allow_origin_regex=allow_origin_regex,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD"],
     allow_headers=["*"],
+    expose_headers=["*"],
+    max_age=86400,
 )
 
 # Register API v1 Router
