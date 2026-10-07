@@ -1,3 +1,5 @@
+import axios from 'axios';
+
 /**
  * Robust API Base URL Normalizer:
  * Handles:
