@@ -7,30 +7,58 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Define logout first to ensure clean references
+  const logout = async () => {
+    try {
+      if (user) {
+        await api.post('/auth/logout');
+      }
+    } catch (e) {
+      // Ignore network errors on logout
+    } finally {
+      localStorage.removeItem('phishguard_access_token');
+      localStorage.removeItem('phishguard_refresh_token');
+      localStorage.removeItem('phishguard_user');
+      setUser(null);
+    }
+  };
+
   // Initialize Auth state from stored token/user
   useEffect(() => {
+    let isMounted = true;
     const initializeAuth = async () => {
       const token = localStorage.getItem('phishguard_access_token');
       if (token) {
         try {
           const res = await api.get('/auth/me');
-          setUser(res.data);
-          localStorage.setItem('phishguard_user', JSON.stringify(res.data));
+          if (isMounted) {
+            setUser(res.data);
+            localStorage.setItem('phishguard_user', JSON.stringify(res.data));
+          }
         } catch (err) {
-          console.warn('Session restoration failed:', err);
-          logout();
+          console.warn('Session restoration failed, resetting local credentials:', err);
+          localStorage.removeItem('phishguard_access_token');
+          localStorage.removeItem('phishguard_refresh_token');
+          localStorage.removeItem('phishguard_user');
+          if (isMounted) setUser(null);
         }
       }
-      setLoading(false);
+      if (isMounted) setLoading(false);
     };
 
     initializeAuth();
 
     const handleLogoutEvent = () => {
+      localStorage.removeItem('phishguard_access_token');
+      localStorage.removeItem('phishguard_refresh_token');
+      localStorage.removeItem('phishguard_user');
       setUser(null);
     };
     window.addEventListener('auth:logout', handleLogoutEvent);
-    return () => window.removeEventListener('auth:logout', handleLogoutEvent);
+    return () => {
+      isMounted = false;
+      window.removeEventListener('auth:logout', handleLogoutEvent);
+    };
   }, []);
 
   const requestEmail = async (email) => {
@@ -114,21 +142,6 @@ export const AuthProvider = ({ children }) => {
     setUser(res.data);
     localStorage.setItem('phishguard_user', JSON.stringify(res.data));
     return res.data;
-  };
-
-  const logout = async () => {
-    try {
-      if (user) {
-        await api.post('/auth/logout');
-      }
-    } catch (e) {
-      // Ignore network errors on logout
-    } finally {
-      localStorage.removeItem('phishguard_access_token');
-      localStorage.removeItem('phishguard_refresh_token');
-      localStorage.removeItem('phishguard_user');
-      setUser(null);
-    }
   };
 
   const updateUserTier = async (newTier, vulnerabilityIndex = null) => {

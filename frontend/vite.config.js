@@ -8,9 +8,13 @@ export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
-    electron({
-      entry: ['electron/main.js', 'electron/preload.js'],
-    })
+    ...(process.env.ELECTRON === 'true'
+      ? [
+          electron({
+            entry: ['electron/main.js', 'electron/preload.js'],
+          }),
+        ]
+      : []),
   ],
   server: {
     port: 5173,
