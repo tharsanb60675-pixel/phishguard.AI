@@ -4,15 +4,11 @@ import { useAuth } from '../context/AuthContext';
 import {
   ShieldAlert,
   ShieldCheck,
-  Radio,
   Crosshair,
-  Bot,
   MessageSquareCode,
   History,
-  User,
   LogOut,
   Sparkles,
-  QrCode,
 } from 'lucide-react';
 
 const Navbar = () => {
@@ -22,11 +18,8 @@ const Navbar = () => {
   const navItems = [
     { name: 'Dashboard', path: '/', icon: Crosshair },
     { name: 'Threat Scanner', path: '/scanner', icon: ShieldAlert },
-    { name: 'Universal Scanner', path: '/qr-scanner', icon: QrCode },
-    { name: 'AI Helpline', path: '/helpline', icon: Bot },
     { name: 'Safety Chatbot', path: '/chatbot', icon: MessageSquareCode },
     { name: 'Background Protection', path: '/background-protection', icon: ShieldCheck },
-
     { name: 'Audit Ledger', path: '/history', icon: History },
   ];
 
